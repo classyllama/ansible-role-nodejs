@@ -1,0 +1,27 @@
+- name: Check if npm is installed
+  yum:
+    list: nodejs
+  # If not installed yum_list.results[*].yumstate != installed
+  register: nodejs_pkg
+  when: nodejs_update is undefined
+  tags: nodejs
+  
+- name: Determine if nodejs needs to be installed
+  set_fact:
+    nodejs_update: nodejs_pkg.results|selectattr("yumstate", "match", "installed")|list|length != 0
+  when: nodejs_update is undefined
+  tags: nodejs
+
+
+- name: Download nodejs update script
+  get_url:
+    url: "{{ nodejs_update_url }}"
+    dest: ~/nodejs_update
+    mode: 700
+  tags: nodejs
+  when: nodejs_update|bool
+  
+- name: Run nodejs update script
+  command: "~/nodejs_update"
+  tags: nodejs
+  when: nodejs_update|bool
